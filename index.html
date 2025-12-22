@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中国新诗声音检测器 v3.1</title>
+    <title>中国新诗声音检测器</title>
     <script src="https://unpkg.com/pinyin-pro"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -51,11 +51,12 @@
         }
 
         .author-info {
-            text-align: center;
-            color: #888;
-            font-size: 11px;
-            margin-top: 25px; 
-            margin-bottom: 35px;
+           text-align: center;
+           color: #888;
+           font-size: 11px;
+           margin-top: 25px; 
+           margin-bottom: 35px;
+           line-height: 1.6;
         }
 
         textarea {
@@ -239,14 +240,14 @@
 
 <div class="container">
     <h1>中国新诗声音检测器</h1>
-    <div class="author-info">制作：曹僧+Gemini，2025.11.22v1.0，2025.12.22v3.1</div> 
+    <div class="author-info">制作：曹僧+Gemini<br>版本：2025.11.22 v1.0，2025.12.22 v3.2</div>
     
     <textarea id="input-text" placeholder="请在此输入或粘贴您的诗歌文本..."></textarea>
     
     <div class="controls">
         <button id="btn-tone" onclick="runDetection('tone')">语流波形</button>
         <button id="btn-initial" onclick="runDetection('initial')">声母 (双声)</button>
-        <button id="btn-final" onclick="runDetection('final')">韵母 (叠韵)</button>
+        <button id="btn-final" onclick="runDetection('final')">韵母 (宽韵)</button>
         <button id="btn-char" onclick="runDetection('char')">用字统计</button> 
         <button id="btn-group" onclick="runDetection('group')">重复字组</button> 
         <button id="btn-noline" onclick="runDetection('noline')">清除分行</button>
@@ -305,11 +306,15 @@
     const initialMethodMap = { 'b': '塞音', 'p': '塞音', 'd': '塞音', 't': '塞音', 'g': '塞音', 'k': '塞音', 'j': '塞擦音', 'q': '塞擦音', 'zh': '塞擦音', 'ch': '塞擦音', 'z': '塞擦音', 'c': '塞擦音', 'f': '擦音', 'h': '擦音', 'x': '擦音', 'sh': '擦音', 's': '擦音', 'r': '擦音', 'm': '鼻音', 'n': '鼻音', 'l': '边音', 'y': '隔音字母', 'w': '隔音字母', '无': '零声母' };
     const initialTextureMap = { 'b': 'hard', 'p': 'hard', 'd': 'hard', 't': 'hard', 'g': 'hard', 'k': 'hard', 'f': 'rough', 'h': 'rough', 'x': 'rough', 's': 'rough', 'sh': 'rough', 'r': 'rough', 'z': 'tough', 'c': 'tough', 'zh': 'tough', 'ch': 'tough', 'j': 'tough', 'q': 'tough', 'm': 'soft', 'n': 'soft', 'l': 'soft', 'y': 'void', 'w': 'void', '无': 'void' };
     const textureInfo = { 'hard': { name: '爆破/硬', color: '#e74c3c', desc: '打击、阻断、力量感' }, 'rough': { name: '摩擦/糙', color: '#e67e22', desc: '沙砾、风声、流逝感' }, 'tough': { name: '咬合/韧', color: '#8e44ad', desc: '纠缠、撕裂、咀嚼感' }, 'soft': { name: '流音/软', color: '#2ecc71', desc: '流淌、液体、抚慰感' }, 'void': { name: '零声母/空', color: '#95a5a6', desc: '空气、无防御、直接' } };
-    const finalMoodMap = { 'open': ['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'üan', 'ang', 'iang', 'uang'], 'sharp': ['i', 'ie', 'ei', 'ui', 'uei', 'in', 'ing', 'iou'], 'deep': ['u', 'uo', 'o', 'ou', 'iu', 'un', 'uen', 'ong', 'iong'], 'round': ['e', 'en', 'eng', 'er', 'ueng'], 'constricted': ['ü', 'ue', 'üe', 'ün', 'v', 've'] };
+    
+    // iong 归为 constricted
+    const finalMoodMap = { 'open': ['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'üan', 'ang', 'iang', 'uang'], 'sharp': ['i', 'ie', 'ei', 'ui', 'uei', 'in', 'ing', 'iou'], 'deep': ['u', 'uo', 'o', 'ou', 'iu', 'un', 'uen', 'ong'], 'round': ['e', 'en', 'eng', 'er', 'ueng'], 'constricted': ['ü', 'ue', 'üe', 'ün', 'v', 've', 'iong'] };
     const moodInfo = { 'open': { name: '高亮/开放', color: '#e74c3c', desc: '开口度大，音色洪亮、热烈 (a系)' }, 'sharp': { name: '尖锐/齐齿', color: '#bdc3c7', desc: '唇形扁平，音色尖细、冷峻 (i系)' }, 'deep': { name: '深沉/合口', color: '#2c3e50', desc: '唇形圆敛，音色幽暗、厚重 (u/o系)' }, 'round': { name: '中性/柔和', color: '#f1c40f', desc: '开口适中，音色平稳、温润 (e系)' }, 'constricted': { name: '压抑/撮口', color: '#9b59b6', desc: '唇形撮圆，音色内卷、细腻 (ü系)' } };
 
     function getSiHu(finalStr) {
         if (!finalStr) return '开口呼';
+        // iong 判定为撮口呼
+        if (finalStr === 'iong') return '撮口呼';
         if (finalStr.startsWith('i') || finalStr.startsWith('y')) return '齐齿呼';
         if (finalStr.startsWith('u') || finalStr.startsWith('w')) return '合口呼';
         if (finalStr.startsWith('ü') || finalStr.startsWith('v')) return '撮口呼';
@@ -587,11 +592,29 @@
                 const c1 = validChars[i]; const c2 = validChars[i+1];
                 if (c1.compareVal && c1.compareVal !== '无') {
                     let isMatch = (c1.compareVal === c2.compareVal);
+                    
+                    // --- 修改：增加针对特定鼻韵母的模糊押韵逻辑 ---
                     if (!isMatch && type === 'final') {
-                        const v1 = c1.compareVal; const v2 = c2.compareVal; 
-                        if (v1.endsWith('ng') && v2.endsWith('ng')) isMatch = true;
-                        else if (v1.endsWith('n') && v2.endsWith('n')) isMatch = true;
+                        const f1 = c1.final; 
+                        const f2 = c2.final;
+                        // 定义允许互押的组合
+                        const pairs = [
+                            ['an', 'ang'],
+                            ['en', 'eng'],
+                            ['in', 'ing'],
+                            ['ian', 'iang'],
+                            ['uan', 'uang'],
+                            ['ün', 'iong']
+                        ];
+                        for (let p of pairs) {
+                            if ((f1 === p[0] && f2 === p[1]) || (f1 === p[1] && f2 === p[0])) {
+                                isMatch = true;
+                                break;
+                            }
+                        }
                     }
+                    // --- 修改结束 ---
+
                     if (isMatch) { c1.highlightClass = hlClass; c2.highlightClass = hlClass; }
                 }
             }
@@ -676,13 +699,15 @@
         const highEnergyFinals = ['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'üan', 'ang', 'iang', 'uang'];
         
         // 2. 中开口度/圆润度 (80分): o/e 家族 + iu, ui, un, ueng
+        // iong 移除
         const midEnergyFinals = ['o', 'uo', 'ou', 'ong', 'iong', 'e', 'en', 'eng', 'ueng', 'er', 'ei', 'ie', 'üe', 'iu', 'ui', 'un'];
-        
+        const midEnergyFinalsClean = midEnergyFinals.filter(f => f !== 'iong');
+
         // 3. 齐齿/撮口/高元音 (75分): i/ü 开头
         
         if (highEnergyFinals.includes(fin)) {
             finScore = 100;
-        } else if (midEnergyFinals.includes(fin)) {
+        } else if (midEnergyFinalsClean.includes(fin)) {
             finScore = 80;
         } else if (fin.startsWith('i') || fin.startsWith('ü')) {
             finScore = 75; 
