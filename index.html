@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中国新诗声音检测器 v3.0</title>
+    <title>中国新诗声音检测器 v3.1</title>
     <script src="https://unpkg.com/pinyin-pro"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -239,7 +239,7 @@
 
 <div class="container">
     <h1>中国新诗声音检测器</h1>
-    <div class="author-info">制作：曹僧+Gemini，2025.12.14 v3.0</div> 
+    <div class="author-info">制作：曹僧+Gemini，2025.11.22v1.0，2025.12.22v3.1</div> 
     
     <textarea id="input-text" placeholder="请在此输入或粘贴您的诗歌文本..."></textarea>
     
@@ -301,11 +301,11 @@
     let currentCharSortColumn = 'frequency'; 
     let currentCharSortDirection = -1; 
 
-    // 映射表配置 (省略，保持不变)
+    // 映射表配置
     const initialMethodMap = { 'b': '塞音', 'p': '塞音', 'd': '塞音', 't': '塞音', 'g': '塞音', 'k': '塞音', 'j': '塞擦音', 'q': '塞擦音', 'zh': '塞擦音', 'ch': '塞擦音', 'z': '塞擦音', 'c': '塞擦音', 'f': '擦音', 'h': '擦音', 'x': '擦音', 'sh': '擦音', 's': '擦音', 'r': '擦音', 'm': '鼻音', 'n': '鼻音', 'l': '边音', 'y': '隔音字母', 'w': '隔音字母', '无': '零声母' };
     const initialTextureMap = { 'b': 'hard', 'p': 'hard', 'd': 'hard', 't': 'hard', 'g': 'hard', 'k': 'hard', 'f': 'rough', 'h': 'rough', 'x': 'rough', 's': 'rough', 'sh': 'rough', 'r': 'rough', 'z': 'tough', 'c': 'tough', 'zh': 'tough', 'ch': 'tough', 'j': 'tough', 'q': 'tough', 'm': 'soft', 'n': 'soft', 'l': 'soft', 'y': 'void', 'w': 'void', '无': 'void' };
     const textureInfo = { 'hard': { name: '爆破/硬', color: '#e74c3c', desc: '打击、阻断、力量感' }, 'rough': { name: '摩擦/糙', color: '#e67e22', desc: '沙砾、风声、流逝感' }, 'tough': { name: '咬合/韧', color: '#8e44ad', desc: '纠缠、撕裂、咀嚼感' }, 'soft': { name: '流音/软', color: '#2ecc71', desc: '流淌、液体、抚慰感' }, 'void': { name: '零声母/空', color: '#95a5a6', desc: '空气、无防御、直接' } };
-    const finalMoodMap = { 'open': ['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'ang', 'iang', 'uang'], 'sharp': ['i', 'ie', 'ei', 'ui', 'in', 'ing'], 'deep': ['u', 'uo', 'o', 'ou', 'iu', 'un', 'ong', 'iong'], 'round': ['e', 'en', 'eng', 'er'], 'constricted': ['ü', 'ue', 'üe', 'ün', 'üan', 'v', 've'] };
+    const finalMoodMap = { 'open': ['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'üan', 'ang', 'iang', 'uang'], 'sharp': ['i', 'ie', 'ei', 'ui', 'uei', 'in', 'ing', 'iou'], 'deep': ['u', 'uo', 'o', 'ou', 'iu', 'un', 'uen', 'ong', 'iong'], 'round': ['e', 'en', 'eng', 'er', 'ueng'], 'constricted': ['ü', 'ue', 'üe', 'ün', 'v', 've'] };
     const moodInfo = { 'open': { name: '高亮/开放', color: '#e74c3c', desc: '开口度大，音色洪亮、热烈 (a系)' }, 'sharp': { name: '尖锐/齐齿', color: '#bdc3c7', desc: '唇形扁平，音色尖细、冷峻 (i系)' }, 'deep': { name: '深沉/合口', color: '#2c3e50', desc: '唇形圆敛，音色幽暗、厚重 (u/o系)' }, 'round': { name: '中性/柔和', color: '#f1c40f', desc: '开口适中，音色平稳、温润 (e系)' }, 'constricted': { name: '压抑/撮口', color: '#9b59b6', desc: '唇形撮圆，音色内卷、细腻 (ü系)' } };
 
     function getSiHu(finalStr) {
@@ -337,7 +337,10 @@
         if (!finalStr) return '';
         if (finalStr === 'ui') return 'ei';      
         if (finalStr === 'iu') return 'ou';      
-        if (finalStr === 'un') return 'en';      
+        if (finalStr === 'un') return 'en';
+        if (finalStr === 'uei') return 'ei'; 
+        if (finalStr === 'iou') return 'ou'; 
+        if (finalStr === 'uen') return 'en'; 
         let core = finalStr;
         if (core.length > 1) {
             const firstChar = core[0];
@@ -421,7 +424,6 @@
             return;
         }
 
-        // v4.1+ 控制图表显示
         if (type === 'tone') {
             chartSection.style.display = 'block';
         } else {
@@ -442,9 +444,45 @@
             if (item.isCN) {
                 item.tone = pinyin(item.char, { pattern: 'num', type: 'array' })[0];
                 item.initial = pinyin(item.char, { pattern: 'initial', type: 'array' })[0] || '无';
-                let fin = pinyin(item.char, { pattern: 'final', toneType: 'none', type: 'array' })[0];
-                let ini = item.initial;
-                if (['j', 'q', 'x', 'y'].includes(ini) && fin.startsWith('u')) fin = 'ü' + fin.substring(1);
+                
+                const fullPy = pinyin(item.char, { toneType: 'none', type: 'array' })[0]; 
+                let fin = '';
+
+                // --- 增强版韵母判定逻辑 (Start) ---
+                if (fullPy === 'wu') {
+                    fin = 'u';
+                } else if (fullPy === 'yi') {
+                    fin = 'i';
+                } 
+                else if (fullPy.startsWith('w')) {
+                    // 看见 w 全部换成 u
+                    fin = 'u' + fullPy.substring(1); 
+                } 
+                else if (fullPy.startsWith('y')) {
+                    if (fullPy.startsWith('yu')) {
+                        // 看见 yu 组合，u 变 ü
+                        fin = 'ü' + fullPy.substring(2);
+                    } else {
+                        // 看见 y 且后面不是 u，y 变 i
+                        fin = 'i' + fullPy.substring(1);
+                        if (fin.startsWith('ii')) { fin = fin.substring(1); }
+                    }
+                } 
+                else {
+                    fin = pinyin(item.char, { pattern: 'final', toneType: 'none', type: 'array' })[0];
+                    if (['j', 'q', 'x'].includes(item.initial) && fin.startsWith('u')) {
+                        fin = 'ü' + fin.substring(1);
+                    }
+                }
+
+                // --- 新增：归并规则 ---
+                // iou -> iu, uei -> ui, uen -> un
+                if (fin === 'iou') fin = 'iu';
+                if (fin === 'uei') fin = 'ui';
+                if (fin === 'uen') fin = 'un';
+
+                // --- 增强版韵母判定逻辑 (End) ---
+
                 item.final = fin.replace('v', 'ü');
                 item.sandhiTone = item.tone; 
             }
@@ -611,7 +649,8 @@
     function getResonanceFactor(fin) {
         if (fin.endsWith('ng')) return 1.25;
         if (fin.endsWith('n')) return 1.15;
-        if (['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'ang', 'iang', 'uang'].includes(fin)) return 1.1;
+        // üan 属于高能量，但 iu, ui, un 属于中等，这里列出的都是高能量或鼻音
+        if (['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'üan', 'ang', 'iang', 'uang'].includes(fin)) return 1.1;
         return 1.0;
     }
 
@@ -630,10 +669,26 @@
         
         const fin = item.final;
         let finScore = 60;
-        if (['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'ang', 'iang', 'uang'].includes(fin)) finScore = 100;
-        else if (['o', 'uo', 'ou', 'ong', 'iong', 'e', 'en', 'eng', 'er', 'ei'].includes(fin)) finScore = 80;
-        else if (fin.startsWith('i') || fin.startsWith('ü')) finScore = 75; 
-        else if (fin.startsWith('u')) finScore = 50;
+
+        // --- 动态波形图：更新韵母强度评分表，支持归并后的 iu, ui, un ---
+        
+        // 1. 高开口度/高响度 (100分): a 家族 + üan
+        const highEnergyFinals = ['a', 'ia', 'ua', 'ai', 'uai', 'ao', 'iao', 'an', 'ian', 'uan', 'üan', 'ang', 'iang', 'uang'];
+        
+        // 2. 中开口度/圆润度 (80分): o/e 家族 + iu, ui, un, ueng
+        const midEnergyFinals = ['o', 'uo', 'ou', 'ong', 'iong', 'e', 'en', 'eng', 'ueng', 'er', 'ei', 'ie', 'üe', 'iu', 'ui', 'un'];
+        
+        // 3. 齐齿/撮口/高元音 (75分): i/ü 开头
+        
+        if (highEnergyFinals.includes(fin)) {
+            finScore = 100;
+        } else if (midEnergyFinals.includes(fin)) {
+            finScore = 80;
+        } else if (fin.startsWith('i') || fin.startsWith('ü')) {
+            finScore = 75; 
+        } else if (fin.startsWith('u')) {
+            finScore = 50;
+        }
         
         if (fin.endsWith('ng')) finScore += 10;
         else if (fin.endsWith('n')) finScore += 5;
@@ -676,7 +731,6 @@
                 score = 0; label = '↵';
                 prevScore = 0; // 换行归零
             } else if (item.isPunct) {
-                // v4.5 修改：锐化参数
                 if (strongStopRegex.test(item.char)) { score = 3; } else { score = 6; }
                 label = item.char;
                 prevScore = score; 
@@ -746,7 +800,7 @@
         });
     }
 
-    // --- 表格渲染 (保持不变) ---
+    // --- 表格渲染 ---
     function getConsonantAnalysisHTML(sortedData) {
         let counts = { 'hard': 0, 'rough': 0, 'tough': 0, 'soft': 0, 'void': 0 }; let total = 0;
         sortedData.forEach(item => { const type = initialTextureMap[item.key] || 'void'; counts[type] += item.val; total += item.val; });
@@ -805,7 +859,7 @@
             let valA, valB;
             if (sortBy === 'val' || sortBy === 'frequency') { valA = sortBy === 'val' ? a.val : a.frequency; valB = sortBy === 'val' ? b.val : b.frequency; return sortDir * (valA - valB); } 
             if (sortBy === 'siHu') { const siHuOrder = ['开口呼', '齐齿呼', '合口呼', '撮口呼', '其他']; const indexA = siHuOrder.indexOf(a.siHu); const indexB = siHuOrder.indexOf(b.siHu); if (indexA !== indexB) return sortDir * (indexA - indexB); return a.key.localeCompare(b.key, 'zh-CN'); }
-            valA = a.key; valB = b.key; return sortDir * valA.localeCompare(valB, 'zh-CN');
+            valA = a.key; valB = b.key; return sortDir * valA.localeCompare(b.key, 'zh-CN');
         });
         _renderFinalTable(data);
     }
